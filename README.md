@@ -1,0 +1,1 @@
+sudo /Users/seena.singh/go/bin/CompileDaemon -command="./todo"
