@@ -1,28 +1,42 @@
 package utils
 
 import (
+	"crypto/ecdsa"
 	"log"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtSecret = []byte("12a3f4b5c6d7e8f90123456789abcdef123456789abcdef01234567890abcdef")
+var privateKey *ecdsa.PrivateKey
 
 func GenrateToken(userId uint) (string, error) {
+	// Load the private key from PEM file
+    privateKeyData, err := os.ReadFile("private_key.pem")
+    if err != nil {
+        log.Fatalf("Error reading private key: %v", err)
+    }
+
+    // Parse the ECDSA private key
+    privateKey, err := jwt.ParseECPrivateKeyFromPEM(privateKeyData)
+    if err != nil {
+        log.Fatalf("Error parsing ECDSA private key: %v", err)
+    }
+	
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
 		"userId": userId,
 		"exp":    time.Now().Add(time.Hour * 24).Unix(),
 	})
-	log.Println(jwtSecret)
+	// log.Println(jwtSecret)
 
-	return token.SignedString(jwtSecret)
+	return token.SignedString(privateKey)
 }
 
 func VerifyToken(token string) (*jwt.Token, error) {
 	return jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
-		return jwtSecret, nil
+		return &privateKey.PublicKey, nil
 	})
 }
 
